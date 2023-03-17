@@ -1,9 +1,17 @@
+const publicChat = require("../Services/messageService");
 const tryCatchAsync = require("../../../util/tryCatchAsync");
 const apiResponse = require("../../../util/apiResponse");
 const Messages = require("../Models/Messages");
 const GroupChat = require("../Models/GroupChat");
 const PublicChat = require("../Models/PublicChat");
 const { success } = require("../../../util/statusCode").statusCode;
+
+exports.uploadPublicChatMedia = async (req, res) => {
+  console.log("controller");
+  console.log("detail");
+  const response = await publicChat.publicChatMedia(req, res);
+  return response;
+};
 
 exports.addPublicChat = async (messageDetail) => {
   const { message, user, message_type } = messageDetail;

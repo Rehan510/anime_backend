@@ -10,8 +10,9 @@ dotenv.config({ path: "./config.env" });
 const port = process.env.PORT || 3001;
 const publicChatRoom = process.env.PUBLIC_CHAT_ROOM;
 global.Services = path.resolve("./api/v1/Controllers/Services");
-
-const DB = process.env.DATABASE.replace("<PASSWORD>", process.env.DB_Password);
+const DB =
+  "mongodb+srv://rehan:anime123@cluster0.ykgq1aj.mongodb.net/?retryWrites=true&w=majority";
+// const DB = process.env.DATABASE.replace("<PASSWORD>", process.env.DB_Password);
 const mongoose_options = {
   useNewUrlParser: true,
   useCreateIndex: true,
@@ -106,15 +107,13 @@ io.on("connection", function (socket) {
   });
   socket.on(publicChatRoom, async (data, callback) => {
     console.log(data, "someone message in public chat group");
-    
-    io.sockets
-      .in(publicChatRoom)
-      .emit(publicChatRoom, {
-        message: data.message,
-        createdAt: new Date(),
-        user: data.user,
-      });
-      await message_controller.addPublicChat(data);
+
+    io.sockets.in(publicChatRoom).emit(publicChatRoom, {
+      message: data.message,
+      createdAt: new Date(),
+      user: data.user,
+    });
+    await message_controller.addPublicChat(data);
     // const user = getUser(data.id);
     // if (user) {
     //   io.to(user.room).emit("message", {
