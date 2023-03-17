@@ -4,10 +4,11 @@ const dotenv = require("dotenv");
 const app = require("./app");
 const path = require("path");
 const socket = require("socket.io");
-
+const message_controller = require("./api/v1/Controllers/MessageController");
 dotenv.config({ path: "./config.env" });
 
 const port = process.env.PORT || 3001;
+const publicChatRoom = process.env.PUBLIC_CHAT_ROOM;
 global.Services = path.resolve("./api/v1/Controllers/Services");
 
 const DB = process.env.DATABASE.replace("<PASSWORD>", process.env.DB_Password);
@@ -30,66 +31,104 @@ const running_server = server.listen(port, () => {
 const io = socket(running_server, {
   cors: {
     origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true,
+    allowedHeaders: ["my-custom-header"],
   },
 });
 //store all online users inside this map
 const users = [];
 
-const addUser = ({ name, id, room }) => {
-  name = name.trim().toLowerCase();
-  room = room.trim().toLowerCase();
+// const addUser = ({ name, id, room }) => {
+//   name = name.trim().toLowerCase();
+//   room = room.trim().toLowerCase();
 
-  const index = users.findIndex((user) => id === user.id && room === user.room);
+//   const index = users.findIndex((user) => id === user.id && room === user.room);
 
-  const user = { name, id, room };
-  if (index === -1) {
-    users.push(user);
-  }
+//   const user = { name, id, room };
+//   if (index === -1) {
+//     users.push(user);
+//   }
 
-  return { user };
-};
+//   return { user };
+// };
 
-const getUser = (id) => users.find((user) => id === user.id);
-const getUsersInRoom = (room) => users.filter((user) => room === user.room);
+// const getUser = (id) => users.find((user) => id === user.id);
+// const getUsersInRoom = (room) => users.filter((user) => room === user.room);
 
-io.on("connection", (socket) => {
-  global.chatSocket = socket;
-  socket.on("join", ({ name, room, id }, callback) => {
-    const { user, error } = addUser({
-      id: id ? id : socket.id,
-      name,
-      room,
-    });
+// io.on("connection", (socket) => {
+//   global.chatSocket = socket;
+//   socket.on("join", ({ name, room, id }, callback) => {
+//     const { user, error } = addUser({
+//       id: id ? id : socket.id,
+//       name,
+//       room,
+//     });
 
-    if (error) return callback(error);
+//     if (error) return callback(error);
 
-    io.to(user.id).emit("getCurrent", user);
+//     io.to(user.id).emit("getCurrent", user);
 
-    socket.join(user.room);
+//     socket.join(user.room);
 
-    io.to(user.room).emit("roomData", {
-      room: user.room,
-      users: getUsersInRoom(user.room),
-    });
+//     io.to(user.room).emit("roomData", {
+//       room: user.room,
+//       users: getUsersInRoom(user.room),
+//     });
 
-    callback(user);
+//     callback(user);
+//   });
+
+//   socket.on("sendMessage", (data, callback) => {
+//     const user = getUser(data.id);
+//     if (user) {
+//       io.to(user.room).emit("message", {
+//         id: user.id,
+//         createdAt: new Date(),
+//         name: user.name,
+//         message: data.message,
+//       });
+//       io.to(user.room).emit("roomData", {
+//         room: user.room,
+//         users: getUsersInRoom(user.room),
+//       });
+//     }
+//     callback();
+//   });
+// });
+
+io.on("connection", function (socket) {
+  console.log(`A client connected:`);
+  console.log(`Someone is recently join public chat group`);
+  socket.on("join_room", function (room) {
+    console.log("joined_room");
+    socket.join(room);
   });
-
-  socket.on("sendMessage", (data, callback) => {
-    const user = getUser(data.id);
-    if (user) {
-      io.to(user.room).emit("message", {
-        id: user.id,
-        createdAt: new Date(),
-        name: user.name,
+  socket.on(publicChatRoom, async (data, callback) => {
+    console.log(data, "someone message in public chat group");
+    
+    io.sockets
+      .in(publicChatRoom)
+      .emit(publicChatRoom, {
         message: data.message,
+        createdAt: new Date(),
+        user: data.user,
       });
-      io.to(user.room).emit("roomData", {
-        room: user.room,
-        users: getUsersInRoom(user.room),
-      });
-    }
-    callback();
+      await message_controller.addPublicChat(data);
+    // const user = getUser(data.id);
+    // if (user) {
+    //   io.to(user.room).emit("message", {
+    //     id: user.id,
+    //     createdAt: new Date(),
+    //     name: user.name,
+    //     message: data.message,
+    //   });
+    //   io.to(user.room).emit("roomData", {
+    //     room: user.room,
+    //     users: getUsersInRoom(user.room),
+    //   });
+    // }
+    // callback();
   });
 });
 

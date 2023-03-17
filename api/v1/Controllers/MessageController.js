@@ -2,7 +2,22 @@ const tryCatchAsync = require("../../../util/tryCatchAsync");
 const apiResponse = require("../../../util/apiResponse");
 const Messages = require("../Models/Messages");
 const GroupChat = require("../Models/GroupChat");
+const PublicChat = require("../Models/PublicChat");
 const { success } = require("../../../util/statusCode").statusCode;
+
+exports.addPublicChat = async (messageDetail) => {
+  const { message, user, message_type } = messageDetail;
+  const payload = {
+    message: message,
+    message_type: "message",
+    sender_name: user.name,
+  };
+  const db = new PublicChat(payload);
+  const data = await db.save();
+  const allMessage = await PublicChat.find();
+  console.log(allMessage, "allMessages");
+  return data;
+};
 
 exports.addChat = tryCatchAsync(async (req, res) => {
   const { sender, name, message } = req.body;
