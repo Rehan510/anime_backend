@@ -14,7 +14,7 @@ exports.imageUpload = tryCatchAsync(async (req, res, next) => {
   try {
     console.log("detaill");
     console.log(req.file);
-    return
+    // return
     const file = req.file;
     const path = req.file.path;
     const filename = file.filename;
