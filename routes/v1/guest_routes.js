@@ -69,5 +69,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 router.post("/upload", upload.single("image"), image_controller.imageUpload);
-
+router.post(
+  "/uploadPublicChatMedia",
+  upload.single("media"),
+  message_controller.uploadPublicChatMedia
+);
 module.exports = router;
